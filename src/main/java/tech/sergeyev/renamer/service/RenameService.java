@@ -15,17 +15,16 @@ public class RenameService {
     private static final String TEMPLATE = "sout_number";
 
     public ServiceResult rename(List<File> mintrudFiles, List<File> expertFiles) {
-        var messages = new ArrayList<String>();
         var result = new ServiceResult();
         try {
             var groupedExpertNames = groupFilesById(expertFiles);
             var groupedMintrudNames = groupFilesById(mintrudFiles);
-            messages.addAll(assignExpertNamesToMintrud(groupedExpertNames, groupedMintrudNames));
+            result.getMessages().addAll(
+                assignExpertNamesToMintrud(groupedExpertNames, groupedMintrudNames));
         } catch (IdParserException | FileRenameException ex) {
             result.setStatus(ResultStatus.ERROR);
-            messages.add(ex.getMessage());
+            result.getMessages().add(ex.getMessage());
         }
-        result.getMessages().addAll(messages);
         return result;
     }
 
@@ -38,29 +37,40 @@ public class RenameService {
             .flatMap(Collection::stream)
             .collect(Collectors.toList())).size();
         var renamedCount = 0;
+        var unrenamedFiles = new ArrayList<File>();
         for (Map.Entry<Integer, List<File>> mintrud : mintrudFilesMap.entrySet()) {
             var id = mintrud.getKey();
             if (expertFilesMap.containsKey(id)) {
                 var expertFiles = expertFilesMap.get(id);
                 expertFiles.removeAll(usedExpertFiles);
                 for (var mintrudFile : mintrud.getValue()) {
+                    String oldName = mintrudFile.getName();
                     if (!expertFiles.isEmpty()) {
                         var expertFile = expertFiles.remove(0);
                         usedExpertFiles.add(expertFile);
-                        renameFile(id, expertFile, mintrudFile);
+                        var newName = renameFile(id, expertFile, mintrudFile);
+                        responseList.add(oldName + " переименован в " + newName);
                         renamedCount++;
+                    } else {
+                        unrenamedFiles.add(mintrudFile);
+                        responseList.add("Для файла выписки " + mintrudFile.getName() +
+                            " нет подходящих имен в выгрузке");
                     }
                 }
             } else {
                 responseList.add("В списке файлов выписки не найден id=" + id);
             }
         }
-        responseList.add("Получено файлов выписки: " + mintrudFilesCount +
+        responseList.add("\nПолучено файлов выписки: " + mintrudFilesCount +
             ", переименовано: " + renamedCount);
+        if (mintrudFilesCount > renamedCount) {
+            responseList.add("Не переименованные файлы: " + unrenamedFiles.stream()
+                .map(File::getName).collect(Collectors.toList()));
+        }
         return responseList;
     }
 
-    private void renameFile(int id, File source, File target) {
+    private String renameFile(int id, File source, File target) {
         var targetFilename = target.getName();
         var formattedCurrentExpertFilename = source.getName()
             .replace(String.format("%d_", id), "")
@@ -70,6 +80,7 @@ public class RenameService {
         if (!target.renameTo(renamed)) {
             throw new FileRenameException("Не удалось переименовать файл: " + target.getName());
         }
+        return renamed.getName();
     }
 
     private Map<Integer, List<File>> groupFilesById(Collection<File> files) {
