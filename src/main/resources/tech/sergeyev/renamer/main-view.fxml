@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox prefHeight="120.0" prefWidth="320.0" spacing="20.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tech.sergeyev.renamer.api.MainController">
+    <HBox spacing="10.0">
+        <Label fx:id="mintrudFilesLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="25.0" prefWidth="240.0" text="Файлы выписки" />
+        <Button onAction="#chooseMultipleMintrudFiles" text="Выбрать" HBox.hgrow="ALWAYS" />
+    </HBox>
+
+    <HBox spacing="10.0">
+        <Label fx:id="expertFilesLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="25.0" prefWidth="240.0" text="Файлы выгрузки" />
+        <Button onAction="#chooseMultipleExpertFiles" text="Выбрать" HBox.hgrow="ALWAYS" />
+    </HBox>
+
+    <Button alignment="CENTER" maxWidth="Infinity" onAction="#onRenameButtonClick" text="Переименовать" />
+
+    <TextArea fx:id="logTextArea" editable="false" prefHeight="0.0" prefWidth="320.0" wrapText="true" VBox.vgrow="ALWAYS" visible="false"/>
+</VBox>
